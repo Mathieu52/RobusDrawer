@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Main-Class: com.innov8.robusdrawer.DrawerApplication
+Class-Path: batik-awt-util-1.17.jar batik-xml-1.17.jar javafx-fxml-17.0.
+ 2.jar xmlgraphics-commons-2.9.jar batik-dom-1.17.jar commons-logging-1.
+ 0.4.jar xml-apis-1.4.01.jar javafx-base-17.0.2.jar jSerialComm-2.10.4.j
+ ar xml-apis-ext-1.3.04.jar commons-lang3-3.12.0.jar commons-text-1.10.0
+ .jar batik-svg-dom-1.17.jar batik-ext-1.17.jar javafx-controls-17.0.2-m
+ ac-aarch64.jar batik-anim-1.17.jar batik-constants-1.17.jar javafx-cont
+ rols-17.0.2.jar javafx-base-17.0.2-mac-aarch64.jar batik-util-1.17.jar 
+ javafx-graphics-17.0.2.jar batik-parser-1.17.jar batik-css-1.17.jar jav
+ afx-fxml-17.0.2-mac-aarch64.jar batik-shared-resources-1.17.jar batik-i
+ 18n-1.17.jar commons-io-2.11.0.jar javafx-graphics-17.0.2-mac-aarch64.j
+ ar
+

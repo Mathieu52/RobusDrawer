@@ -1,0 +1,45 @@
+{
+    "bin": {"robusdrawer": "jdeploy-bundle/jdeploy.js"},
+    "author": "Mathieu Durand",
+    "description": "Drawing application for Innov8 Udes Robus",
+    "main": "index.js",
+    "preferGlobal": true,
+    "repository": "",
+    "version": "1.2.2",
+    "jdeploy": {
+        "jdk": false,
+        "javaVersion": "17",
+        "documentTypes": [
+            {
+                "editor": false,
+                "extension": "txt",
+                "custom": false,
+                "mimetype": "Text data file"
+            },
+            {
+                "extension": "svg",
+                "mimetype": "Scalable Vector Graphics"
+            },
+            {
+                "editor": true,
+                "extension": "rbd",
+                "custom": true,
+                "mimetype": "Robus drawing file"
+            }
+        ],
+        "jar": "out/artifacts/RobusDrawer_jar/RobusDrawer.jar",
+        "javafx": true,
+        "title": "Robus Draw"
+    },
+    "dependencies": {
+        "command-exists-promise": "^2.0.2",
+        "node-fetch": "2.6.7",
+        "tar": "^4.4.8",
+        "yauzl": "^2.10.0",
+        "shelljs": "^0.8.4"
+    },
+    "license": "ISC",
+    "name": "robus_drawer",
+    "files": ["jdeploy-bundle"],
+    "scripts": {"test": "echo \"Error: no test specified\" && exit 1"}
+}

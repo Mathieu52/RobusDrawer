@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="StacktraceSettings">
+    <option name="folders">
+      <set>
+        <option value="$PROJECT_DIR$/src/main/java" />
+        <option value="$PROJECT_DIR$/src/main/resources" />
+      </set>
+    </option>
+    <option name="packages">
+      <set>
+        <option value="com.innov8.robusdrawer" />
+        <option value="net.xz3ra.www" />
+      </set>
+    </option>
+  </component>
+</project>
