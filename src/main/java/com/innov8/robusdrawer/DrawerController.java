@@ -8,6 +8,7 @@ import java.util.*;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.innov8.robusdrawer.dialog.LoadingDialog;
+import com.innov8.robusdrawer.draw.Drawing;
 import com.innov8.robusdrawer.draw.ErasingMode;
 import com.innov8.robusdrawer.draw.PencilColor;
 import com.innov8.robusdrawer.draw.robus.DrawingSettings;
@@ -16,11 +17,14 @@ import com.innov8.robusdrawer.exception.ExceptionAlertHandler;
 import com.innov8.robusdrawer.exception.SaveFailedException;
 import com.innov8.robusdrawer.file.FileTransfer;
 import com.innov8.robusdrawer.file.FilenameSelectorDialogue;
+import com.innov8.robusdrawer.manager.window.WindowManager;
+import com.innov8.robusdrawer.maze.MazeLauncher;
 import com.innov8.robusdrawer.ressource.RessourceManager;
 import com.innov8.robusdrawer.serial.SerialDialogue;
 import com.innov8.robusdrawer.svg.SVGDocument;
 import com.innov8.robusdrawer.utils.FileUIUtils;
 import javafx.beans.binding.Bindings;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
@@ -32,10 +36,12 @@ import javafx.scene.control.*;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
+import javafx.scene.input.*;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -140,6 +146,10 @@ public class DrawerController {
         return drawing.getDrawingPoints().size();
     }
 
+    public Drawing getDrawing() {
+        return drawing;
+    }
+
     @FXML
     void upload() {
         try {
@@ -148,6 +158,8 @@ public class DrawerController {
             drawing.save(path.toAbsolutePath().toString(), getPointLimit());
 
             SerialDialogue serialDialogue = SerialDialogue.fromAvailablePorts();
+            serialDialogue.initOwner(getStage());
+            serialDialogue.initModality(Modality.APPLICATION_MODAL);
             Optional<SerialPort> port = serialDialogue.showAndWait();
 
             if (port.isEmpty()) {
@@ -155,6 +167,8 @@ public class DrawerController {
             }
 
             FilenameSelectorDialogue filenameSelectorDialogue = new FilenameSelectorDialogue();
+            filenameSelectorDialogue.initOwner(getStage());
+            filenameSelectorDialogue.initModality(Modality.APPLICATION_MODAL);
             Optional<String> filename = filenameSelectorDialogue.showAndWait();
 
             if (filename.isEmpty()) {
@@ -211,6 +225,16 @@ public class DrawerController {
         FileUIUtils.loadFile(this::loadFile, "Sauvegarder votre dessin", new FileChooser.ExtensionFilter("Fichier de dessin","*.txt", "*.svg", "*.rbd"));
     }
 
+    @FXML
+    void launchMaze() {
+        MazeLauncher.launch(this, DrawerApplication.class.getResource("maze.fxml"), null);
+    }
+
+    @FXML
+    void organizeWindow() {
+        WindowManager.organizeAll();
+    }
+
     public Scene getScene() {
         return scene;
     }
@@ -227,6 +251,7 @@ public class DrawerController {
 
     public void setStage(Stage stage) {
         this.stage = stage;
+        WindowManager.registerWindow(stage);
     }
 
     void updateCanvas() {
@@ -317,10 +342,10 @@ public class DrawerController {
             onCanvasExit();
         });
 
-        scene.heightProperty().addListener(((observable, oldValue, newValue) -> {
+        ((Pane) canvas.getParent()).heightProperty().addListener(((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                canvas.setWidth(newValue.doubleValue());
-                canvas.setHeight(newValue.doubleValue());
+                canvas.setWidth(newValue.doubleValue() - 3);
+                canvas.setHeight(newValue.doubleValue() - 3);
                 updateCanvas();
             }
         }));
@@ -470,23 +495,22 @@ public class DrawerController {
     }
 
     private void setGlobalEventHandler(Node root) {
-        root.setOnMousePressed(event ->
+        root.setOnMouseClicked(event ->
         {
             if (event.getButton() == MouseButton.SECONDARY)
             {
-                drawing.startErasing();
-                eraseButton.arm();
+                if (!drawing.isErasing()) {
+                    eraseButton.fire();
+                } else {
+                    drawing.stopErasing();
+                }
                 event.consume();
             }
         });
 
-        root.setOnMouseReleased(event ->
-        {
-            if (event.getButton() == MouseButton.SECONDARY)
-            {
-                drawing.stopErasing();
-                eraseButton.disarm();
-                event.consume();
+        root.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.F11) {
+                stage.setFullScreen(!stage.isFullScreen());
             }
         });
     }

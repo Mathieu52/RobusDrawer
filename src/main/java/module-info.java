@@ -10,10 +10,13 @@ module com.innov8.robusdrawer {
     requires batik.parser;
     requires batik.anim;
     requires com.fazecast.jSerialComm;
-    requires javafx.swing;
 
     opens com.innov8.robusdrawer to javafx.fxml;
     exports com.innov8.robusdrawer;
     exports com.innov8.robusdrawer.ressource;
     opens com.innov8.robusdrawer.ressource to javafx.fxml;
+
+    opens com.innov8.robusdrawer.maze to javafx.fxml;
+    exports com.innov8.robusdrawer.maze;
+    exports com.innov8.robusdrawer.draw;
 }

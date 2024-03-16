@@ -10,7 +10,6 @@
     <option name="packages">
       <set>
         <option value="com.innov8.robusdrawer" />
-        <option value="net.xz3ra.www" />
       </set>
     </option>
   </component>

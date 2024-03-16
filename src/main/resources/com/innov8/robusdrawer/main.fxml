@@ -5,11 +5,14 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
@@ -19,11 +22,54 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<HBox alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.innov8.robusdrawer.DrawerController">
-   <children>
-      <BorderPane HBox.hgrow="ALWAYS">
-         <top>
-            <VBox alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.innov8.robusdrawer.DrawerController">
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+        <menus>
+            <Menu mnemonicParsing="false" text="Fichier">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#load" text="Charger">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="L" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#save" text="Sauvegarder">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#upload" text="Téléverser">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="T" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                     </accelerator>
+                  </MenuItem>
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Organisation">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#organizeWindow" text="Organiser">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="O" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                     </accelerator>
+                  </MenuItem>
+               </items>
+            </Menu>
+        </menus>
+      </MenuBar>
+   </top>
+   <left>
+      <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+        <columnConstraints>
+          <ColumnConstraints hgrow="ALWAYS" />
+          <ColumnConstraints hgrow="NEVER" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints valignment="TOP" vgrow="SOMETIMES" />
+          <RowConstraints valignment="BOTTOM" vgrow="ALWAYS" />
+        </rowConstraints>
+         <children>
+            <Separator orientation="VERTICAL" prefHeight="200.0" GridPane.columnIndex="1" GridPane.rowSpan="2147483647" />
+            <VBox alignment="TOP_CENTER" maxWidth="1.7976931348623157E308" GridPane.hgrow="ALWAYS" GridPane.vgrow="SOMETIMES">
                <children>
                   <HBox alignment="CENTER" spacing="5.0">
                      <children>
@@ -117,11 +163,21 @@
                      </padding>
                   </VBox>
                   <Separator prefWidth="200.0" />
+                  <HBox alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#launchMaze" text="Créer un labyrinthe" HBox.hgrow="ALWAYS">
+                           <HBox.margin>
+                              <Insets />
+                           </HBox.margin>
+                        </Button>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </HBox>
                </children>
             </VBox>
-         </top>
-         <bottom>
-            <VBox alignment="CENTER" BorderPane.alignment="CENTER">
+            <VBox alignment="BOTTOM_CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
                <children>
                   <Separator />
                   <GridPane alignment="CENTER" hgap="10.0" vgap="5.0">
@@ -142,11 +198,15 @@
                         <Label text="Longueur" GridPane.rowIndex="4" />
                         <TextField fx:id="playgroundWidthField" minWidth="0.0" text="33" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <TextField fx:id="playgroundHeightField" minWidth="0.0" text="33" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                        <Label text="Taille de la zone de dessin" GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
-                           <font>
-                              <Font size="15.0" />
-                           </font>
-                        </Label>
+                        <HBox GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                           <children>
+                              <Label text="Taille de la zone de dessin">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                         <Separator GridPane.columnSpan="3" GridPane.rowIndex="1" />
                         <Label text="in" GridPane.columnIndex="2" GridPane.rowIndex="3" />
                         <Label text="in" GridPane.columnIndex="2" GridPane.rowIndex="4" />
@@ -174,13 +234,16 @@
                   </HBox>
                </children>
             </VBox>
-         </bottom>
-      </BorderPane>
-      <Separator nodeOrientation="RIGHT_TO_LEFT" orientation="VERTICAL" prefHeight="640.0" prefWidth="0.0" />
-      <Canvas fx:id="canvas" height="640.0" width="640.0">
-         <HBox.margin>
-            <Insets />
-         </HBox.margin>
-      </Canvas>
-   </children>
-</HBox>
+         </children>
+      </GridPane>
+   </left>
+   <center>
+      <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+         <children>
+            <Separator nodeOrientation="RIGHT_TO_LEFT" orientation="VERTICAL" />
+            <Canvas fx:id="canvas" height="640.0" width="640.0" HBox.hgrow="NEVER" />
+            <Separator orientation="VERTICAL" />
+         </children>
+      </HBox>
+   </center>
+</BorderPane>

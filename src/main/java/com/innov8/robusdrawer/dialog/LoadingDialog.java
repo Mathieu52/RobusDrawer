@@ -1,7 +1,10 @@
 package com.innov8.robusdrawer.dialog;
 
+import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -32,6 +35,7 @@ public class LoadingDialog {
         loadingLabel = new Label("Loading...");
         progressBar = new ProgressBar();
         closeButton = new Button("Close");
+        closeButton.setCancelButton(true);
 
         VBox content = new VBox(10);
         content.setMinWidth(200);
@@ -70,35 +74,46 @@ public class LoadingDialog {
     public void startService(Service<?> service, Runnable onCompletion) {
         // Bind the progress bar to the service's progress
         progressBar.progressProperty().bind(service.progressProperty());
-        closeButton.setOnAction((v) -> {
-            dialog.close();
-        });
+
+        closeButton.setOnAction((e) -> dialog.close());
+
+        dialog.setOnCloseRequest((v) -> service.cancel());
 
         // Update the loading label dynamically
-        progressBar.progressProperty().addListener((observable, oldValue, newValue) -> {
+        ChangeListener<Number> labelProgress = (observable, oldValue, newValue) -> {
             if (newValue != null) {
                 loadingLabel.setText(String.format("%.0f%%", newValue.doubleValue() * 100));
             }
-        });
+        };
+        progressBar.progressProperty().addListener(labelProgress);
 
-        service.setOnFailed(e -> closeButton.setDisable(false));
-        service.setOnCancelled(e -> closeButton.setDisable(false));
+        EventHandler<WorkerStateEvent> onFailure = e -> {
+            progressBar.progressProperty().removeListener(labelProgress);
+            loadingLabel.setText("Failed...");
+            closeButton.setDisable(false);
+            progressBar.setStyle("-fx-accent: red");
+            progressBar.progressProperty().unbind();
+            progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        };
 
-        // Set up the service to enable the close button when it is finished
-        service.setOnSucceeded(e -> {
+        EventHandler<WorkerStateEvent> onSuccess = e -> {
+            progressBar.progressProperty().removeListener(labelProgress);
+            loadingLabel.setText("Done...");
+            closeButton.setDisable(false);
+            progressBar.setStyle("-fx-accent: green");
+
             closeButton.setDisable(false);
             // Perform additional actions on completion
             if (onCompletion != null) {
                 onCompletion.run();
             }
-        });
+        };
 
+        service.setOnCancelled(onFailure);
+        service.setOnFailed(onFailure);
+        service.setOnSucceeded(onSuccess);
         // Show the loading dialog and start the service
         dialog.show();
         service.start();
-    }
-
-    public Button getCloseButton() {
-        return closeButton;
     }
 }

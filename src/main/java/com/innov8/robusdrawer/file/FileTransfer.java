@@ -36,14 +36,11 @@ public class FileTransfer extends Service<Void> {
         task.loadFile(file);
         port.openPort();
 
-        task.setOnSucceeded((v) -> port.closePort());
-        task.setOnFailed((v) -> port.closePort());
-        task.setOnCancelled((v) -> port.closePort());
-
         try {
             task.sendData(FileTransferTask.SOH + remoteFileName + '\n');
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            cancel();
+            e.printStackTrace();
         }
 
         return task;
@@ -52,6 +49,8 @@ public class FileTransfer extends Service<Void> {
     private class FileTransferTask extends Task<Void> implements SerialPortDataListener {
 
         public static final int PACKET_SIZE = 50;
+        public static final int PACKET_TRY_LIMIT = 5000;
+        public static final int PACKET_RESPONSE_TIME_LIMIT = 500;
         public static final int WAIT_TIME_NANO = 50;
         public static final char ACK = 0x06;
         public static final char NAK = 0x15;
@@ -59,42 +58,75 @@ public class FileTransfer extends Service<Void> {
         public static final char EOT = 0x04;
         public static final char SOH = 0x01;
 
-        private final Packet packet = new Packet("", PacketState.ACKNOWLEDGED);
+        private final Packet packet = new Packet("", PacketState.NONE);
 
         private String fileData = "";
         private int dataIndex = 0;
 
+        private int tryIndex = 0;
+
+        @Override
+        protected void succeeded() {
+            port.closePort();
+            super.succeeded();
+        }
+
+        @Override
+        protected void cancelled() {
+            port.closePort();
+            super.cancelled();
+        }
+
+        @Override
+        protected void failed() {
+            port.closePort();
+            super.failed();
+        }
+
         @Override
         protected Void call() throws Exception {
             while (!isDone() && !isCancelled()) {
-                if (dataIndex >= fileData.length() - 1) {
-                    sendData(String.valueOf(EOT));
-                    return null;
-                }
+                try {
+                    if (packet.getState() == PacketState.SENT && System.currentTimeMillis() - packet.getTime() > PACKET_RESPONSE_TIME_LIMIT) {
+                        cancel();
+                    }
 
-                if (packet.getState() == PacketState.ACKNOWLEDGED) {
-                    String message = fileData.substring(dataIndex, Math.min(dataIndex + PACKET_SIZE, fileData.length()));
-                    dataIndex += message.length();
-                    updateProgress(dataIndex, fileData.length() - 1);
+                    if (tryIndex > PACKET_TRY_LIMIT) {
+                        cancel();
+                    }
 
-                    packet.setMessage(message);
-                    packet.setState(PacketState.SENT);
-                    sendData(packet.getMessage());
-                } else if (packet.getState() == PacketState.DAMAGED || packet.getState() == PacketState.MISSING) {
-                    sendData(packet.getMessage());
-                } else {
-                    continue;
-                }
+                    if (dataIndex >= fileData.length() - 1) {
+                        sendData(String.valueOf(EOT));
+                        return null;
+                    }
 
-                wait(WAIT_TIME_NANO);
+                    if (packet.getState() == PacketState.ACKNOWLEDGED || packet.getState() == PacketState.NONE) {
+                        String message = fileData.substring(dataIndex, Math.min(dataIndex + PACKET_SIZE, fileData.length()));
+                        dataIndex += message.length();
+                        updateProgress(dataIndex, fileData.length() - 1);
 
-                if (packet.getSize() != PACKET_SIZE) {
-                    sendData(String.valueOf(ACK));
-                } else {
-                    sendData(String.valueOf(ENQ));
+                        packet.setPacket(message, PacketState.SENT);
+                        sendData(packet.getMessage());
+                        tryIndex = 0;
+                    } else if (packet.getState() == PacketState.DAMAGED || packet.getState() == PacketState.MISSING) {
+                        sendData(packet.getMessage());
+                    } else {
+                        continue;
+                    }
+
+                    tryIndex++;
+
+                    wait(WAIT_TIME_NANO);
+
+                    if (packet.getSize() != PACKET_SIZE) {
+                        sendData(String.valueOf(ACK));
+                    } else {
+                        sendData(String.valueOf(ENQ));
+                    }
+                } catch (IOException e) {
+                    cancel();
                 }
             }
-
             return null;
         }
 
