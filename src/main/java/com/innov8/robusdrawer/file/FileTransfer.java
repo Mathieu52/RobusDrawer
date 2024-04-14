@@ -6,13 +6,9 @@ import com.fazecast.jSerialComm.SerialPortEvent;
 import com.innov8.robusdrawer.utils.FileUtils;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.scene.control.Alert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
-import java.util.TooManyListenersException;
-
 public class FileTransfer extends Service<Void> {
     private String remoteFileName;
     private File file;
@@ -32,6 +28,13 @@ public class FileTransfer extends Service<Void> {
     @Override
     protected Task<Void> createTask() {
         FileTransferTask task = new FileTransferTask();
+
+        task.addEventHandler(FileTransferFailedEvent.ANY, e -> {
+            if (e instanceof FileTransferFailedEvent event) {
+                fireEvent(new FileTransferFailedEvent(event.getReason()));
+            }
+        });
+
         port.addDataListener(task);
         task.loadFile(file);
         port.openPort();
@@ -65,6 +68,9 @@ public class FileTransfer extends Service<Void> {
 
         private int tryIndex = 0;
 
+        private boolean timeoutWhileWaitingForResponseOccured = false;
+        private boolean highPacketLossRateOccured = false;
+
         @Override
         protected void succeeded() {
             port.closePort();
@@ -73,12 +79,25 @@ public class FileTransfer extends Service<Void> {
 
         @Override
         protected void cancelled() {
+            FileTransferFailureReason reason = FileTransferFailureReason.UNKNOWN_REASON;
+
+            if (timeoutWhileWaitingForResponseOccured && highPacketLossRateOccured) {
+                reason = FileTransferFailureReason.TIMEOUT_WHILE_HIGH_PACKET_LOSS_RATE;
+            } else if (timeoutWhileWaitingForResponseOccured) {
+                reason = FileTransferFailureReason.TIMEOUT_WHILE_WAITING_FOR_RESPONSE;
+            } else if (highPacketLossRateOccured) {
+                reason = FileTransferFailureReason.HIGH_PACKET_LOSS_RATE;
+            }
+
+            fireEvent(new FileTransferFailedEvent(reason));
+
             port.closePort();
             super.cancelled();
         }
 
         @Override
         protected void failed() {
+            fireEvent(new FileTransferFailedEvent(FileTransferFailureReason.UNKNOWN_REASON));
             port.closePort();
             super.failed();
         }
@@ -88,10 +107,12 @@ public class FileTransfer extends Service<Void> {
             while (!isDone() && !isCancelled()) {
                 try {
                     if (packet.getState() == PacketState.SENT && System.currentTimeMillis() - packet.getTime() > PACKET_RESPONSE_TIME_LIMIT) {
+                        timeoutWhileWaitingForResponseOccured = true;
                         cancel();
                     }
 
                     if (tryIndex > PACKET_TRY_LIMIT) {
+                        highPacketLossRateOccured = true;
                         cancel();
                     }
 
@@ -127,6 +148,7 @@ public class FileTransfer extends Service<Void> {
                     cancel();
                 }
             }
+
             return null;
         }
 

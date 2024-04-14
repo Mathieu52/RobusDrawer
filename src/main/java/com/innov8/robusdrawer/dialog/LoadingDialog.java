@@ -1,5 +1,6 @@
 package com.innov8.robusdrawer.dialog;
 
+import com.innov8.robusdrawer.file.FileTransferFailedEvent;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -87,9 +88,16 @@ public class LoadingDialog {
         };
         progressBar.progressProperty().addListener(labelProgress);
 
-        EventHandler<WorkerStateEvent> onFailure = e -> {
+        EventHandler<FileTransferFailedEvent> onFailure = e -> {
             progressBar.progressProperty().removeListener(labelProgress);
-            loadingLabel.setText("Failed...");
+            String failureText = switch(e.getReason()) {
+                case UNKNOWN_REASON -> "Failed for unknown reason...";
+                case TIMEOUT_WHILE_WAITING_FOR_RESPONSE -> "Device failed to respond in time...";
+                case HIGH_PACKET_LOSS_RATE -> "Failed due to a poor connection...";
+                case TIMEOUT_WHILE_HIGH_PACKET_LOSS_RATE -> "Device failed to respond in time due to poor connection...";
+            };
+
+            loadingLabel.setText(failureText);
             closeButton.setDisable(false);
             progressBar.setStyle("-fx-accent: red");
             progressBar.progressProperty().unbind();
@@ -109,8 +117,12 @@ public class LoadingDialog {
             }
         };
 
-        service.setOnCancelled(onFailure);
-        service.setOnFailed(onFailure);
+        service.addEventHandler(FileTransferFailedEvent.ANY, e -> {
+            if (e instanceof FileTransferFailedEvent event) {
+                onFailure.handle(event);
+            }
+        });
+
         service.setOnSucceeded(onSuccess);
         // Show the loading dialog and start the service
         dialog.show();
